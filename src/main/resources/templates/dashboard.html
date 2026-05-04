@@ -2,242 +2,405 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>UPI Offline Mesh — Demo</title>
-    <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            margin: 0; padding: 24px; background: #0d1117; color: #e6edf3;
-        }
-        h1 { margin-top: 0; color: #f0f6fc; }
-        h2 { color: #58a6ff; border-bottom: 1px solid #30363d; padding-bottom: 4px; margin-top: 32px; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .grid { display: grid; gap: 16px; }
-        .grid-2 { grid-template-columns: 1fr 1fr; }
-        .grid-3 { grid-template-columns: repeat(3, 1fr); }
-        .card {
-            background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px;
-        }
-        .device {
-            border: 1px solid #30363d; border-radius: 6px; padding: 12px; margin-bottom: 8px;
-            background: #0d1117;
-        }
-        .device.bridge { border-color: #2ea043; background: #052e16; }
-        .device.offline { opacity: 0.85; }
-        .badge {
-            display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 10px;
-            font-weight: 600; margin-left: 8px;
-        }
-        .badge-online { background: #2ea043; color: white; }
-        .badge-offline { background: #6e7681; color: white; }
-        .packet-id {
-            font-family: 'Consolas', 'Monaco', monospace; font-size: 11px;
-            background: #21262d; padding: 2px 6px; border-radius: 3px; margin: 2px;
-            display: inline-block;
-        }
-        button {
-            background: #238636; color: white; border: none; padding: 8px 16px;
-            border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;
-            margin: 4px;
-        }
-        button:hover { background: #2ea043; }
-        button.danger { background: #da3633; }
-        button.danger:hover { background: #f85149; }
-        button.secondary { background: #1f6feb; }
-        button.secondary:hover { background: #388bfd; }
-        input, select {
-            background: #0d1117; color: #e6edf3; border: 1px solid #30363d;
-            border-radius: 4px; padding: 6px 10px; font-size: 14px; margin: 4px;
-        }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #30363d; }
-        th { color: #8b949e; font-weight: 600; font-size: 12px; text-transform: uppercase; }
-        .status-SETTLED { color: #56d364; font-weight: 600; }
-        .status-REJECTED { color: #f85149; font-weight: 600; }
-        .status-DUPLICATE_DROPPED { color: #d29922; font-weight: 600; }
-        .status-INVALID { color: #f85149; font-weight: 600; }
-        #log {
-            background: #010409; color: #7ee787; padding: 12px; border-radius: 6px;
-            font-family: 'Consolas', 'Monaco', monospace; font-size: 12px;
-            max-height: 220px; overflow-y: auto; white-space: pre-wrap;
-            border: 1px solid #30363d;
-        }
-        .controls { background: #161b22; padding: 16px; border-radius: 8px;
-                    border: 1px solid #30363d; margin-bottom: 16px; }
-        .step-num {
-            display: inline-block; background: #58a6ff; color: white;
-            border-radius: 50%; width: 24px; height: 24px; text-align: center;
-            line-height: 24px; font-weight: 600; margin-right: 8px;
-        }
-        .balance { font-family: 'Consolas', monospace; color: #56d364; font-weight: 600; }
-        .small { font-size: 12px; color: #8b949e; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesh-Routed Deferred Settlement — Interactive Demo</title>
+    <meta name="description" content="Experience offline UPI payments routed through a Bluetooth mesh network. Interactive demo of encrypted store-and-forward settlement.">
+    <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
-<div class="container">
-    <h1>📡 UPI Offline Mesh — Live Demo</h1>
-    <p class="small">
-        Send money in a basement with zero internet. Encrypted packets gossip from phone to phone
-        until one with 4G reaches the backend.
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+    <div class="hero-badge">⚡ Interactive Architecture Demo</div>
+    <h1>Mesh-Routed Deferred Settlement</h1>
+    <p class="hero-subtitle">
+        Send money with <strong>zero internet</strong>. Encrypted payment packets hop phone-to-phone
+        via Bluetooth until a bridge node reaches 4G and uploads to the settlement engine.
     </p>
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <div class="hero-stat-value">RSA-2048</div>
+            <div class="hero-stat-label">Hybrid Encryption</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">AES-GCM</div>
+            <div class="hero-stat-label">Authenticated Cipher</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">CAS</div>
+            <div class="hero-stat-label">Idempotency Gate</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">24h</div>
+            <div class="hero-stat-label">Replay Window</div>
+        </div>
+    </div>
+</section>
 
-    <div class="controls">
-        <h3 style="margin-top:0">🎬 Demo Flow</h3>
+<div class="container">
 
-        <div>
-            <span class="step-num">1</span><strong>Compose payment</strong> (simulates sender phone)
-            <br>
-            <select id="senderVpa">
-                <option>alice@demo</option>
-                <option>bob@demo</option>
-                <option>carol@demo</option>
-            </select>
-            →
-            <select id="receiverVpa">
-                <option>bob@demo</option>
-                <option>carol@demo</option>
-                <option>alice@demo</option>
-                <option>dave@demo</option>
-            </select>
-            ₹<input type="number" id="amount" value="500" style="width: 100px">
-            PIN <input type="text" id="pin" value="1234" style="width: 80px" maxlength="4">
-            <button onclick="sendPacket()">📤 Inject into Mesh</button>
+    <!-- ===== TAB NAVIGATION ===== -->
+    <nav class="tabs-nav" id="mainTabs">
+        <button class="tab-btn active" data-tab="learn" id="tab-learn">📖 How It Works</button>
+        <button class="tab-btn" data-tab="demo" id="tab-demo">🚀 Live Demo</button>
+        <button class="tab-btn" data-tab="arch" id="tab-arch">🏗️ Architecture</button>
+    </nav>
+
+    <!-- ================ TAB 1: HOW IT WORKS ================ -->
+    <div class="tab-content active" id="content-learn">
+
+        <div class="section-header">
+            <div class="section-icon blue">📡</div>
+            <div>
+                <div class="section-title">The Payment Journey</div>
+                <div class="section-subtitle">From a basement with no signal to a settled transaction in 4 steps</div>
+            </div>
         </div>
 
-        <div style="margin-top: 16px">
-            <span class="step-num">2</span><strong>Gossip</strong> — packets hop device-to-device
-            <button class="secondary" onclick="gossip()">🔄 Run Gossip Round</button>
+        <div class="how-steps">
+            <div class="how-step animate-up">
+                <div class="how-step-num s1">1</div>
+                <span class="how-step-emoji">📱</span>
+                <h4>Compose & Encrypt</h4>
+                <p>Sender's phone builds a payment with a unique nonce, encrypts it using the server's RSA public key (hybrid RSA-OAEP + AES-256-GCM), and wraps it into a mesh packet with TTL=5.</p>
+            </div>
+            <div class="how-step animate-up" style="animation-delay:0.1s">
+                <div class="how-step-num s2">2</div>
+                <span class="how-step-emoji">🔄</span>
+                <h4>Gossip & Forward</h4>
+                <p>The packet spreads via epidemic/gossip protocol — every nearby phone broadcasts to neighbors. TTL decrements per hop. No phone can read the encrypted contents.</p>
+            </div>
+            <div class="how-step animate-up" style="animation-delay:0.2s">
+                <div class="how-step-num s3">3</div>
+                <span class="how-step-emoji">📡</span>
+                <h4>Bridge Uploads</h4>
+                <p>A phone holding the packet walks into 4G range and uploads to the backend. Multiple bridges may upload the same packet simultaneously — the "duplicate storm."</p>
+            </div>
+            <div class="how-step animate-up" style="animation-delay:0.3s">
+                <div class="how-step-num s4">4</div>
+                <span class="how-step-emoji">✅</span>
+                <h4>Settle Exactly Once</h4>
+                <p>Backend hashes → claims idempotency → decrypts → checks freshness → settles. Even 100 duplicate uploads result in exactly one debit/credit.</p>
+            </div>
         </div>
 
-        <div style="margin-top: 16px">
-            <span class="step-num">3</span><strong>Bridge node walks outside, hits 4G</strong>
-            <button class="secondary" onclick="flushBridges()">📡 Bridges Upload to Backend</button>
-            <span class="small">(parallel — exercises idempotency)</span>
+        <!-- Three Hard Problems -->
+        <div class="section-header" style="margin-top:40px">
+            <div class="section-icon orange">🔒</div>
+            <div>
+                <div class="section-title">Three Hard Problems, Solved</div>
+                <div class="section-subtitle">Critical distributed systems challenges addressed end-to-end</div>
+            </div>
         </div>
 
-        <div style="margin-top: 16px">
-            <button class="danger" onclick="resetMesh()">🗑 Reset Mesh + Cache</button>
+        <div class="problem-cards">
+            <div class="problem-card">
+                <span class="problem-label threat">Threat</span>
+                <h4>🕵️ Untrusted Intermediaries</h4>
+                <p>Strangers' phones carry the transaction. They could read amounts or tamper with the receiver.</p>
+                <div style="margin-top:12px">
+                    <span class="problem-label solution">Solution</span>
+                    <p style="margin-top:6px">
+                        <strong>Hybrid Authenticated Encryption.</strong> Payload encrypted with a fresh <code>AES-256</code> key,
+                        that key wrapped with <code>RSA-OAEP</code>. GCM mode ensures any bit-flip causes decryption failure.
+                    </p>
+                </div>
+            </div>
+            <div class="problem-card">
+                <span class="problem-label threat">Threat</span>
+                <h4>⚡ Duplicate Storm</h4>
+                <p>3 bridge nodes hold the same packet. They all POST simultaneously. Naive processing drains the sender 3×.</p>
+                <div style="margin-top:12px">
+                    <span class="problem-label solution">Solution</span>
+                    <p style="margin-top:6px">
+                        <strong>Atomic Compare-and-Swap.</strong> SHA-256 hash of ciphertext as idempotency key.
+                        <code>putIfAbsent()</code> is atomic — exactly one thread proceeds, rest short-circuit in microseconds.
+                    </p>
+                </div>
+            </div>
+            <div class="problem-card">
+                <span class="problem-label threat">Threat</span>
+                <h4>🔁 Replay Attacks</h4>
+                <p>Attacker captures a valid encrypted packet and replays it months later to re-trigger settlement.</p>
+                <div style="margin-top:12px">
+                    <span class="problem-label solution">Solution</span>
+                    <p style="margin-top:6px">
+                        <strong>Nonces & Freshness Windows.</strong> Each payload has a <code>UUID nonce</code> and
+                        <code>signedAt</code> timestamp. Server rejects packets older than 24 hours. Identical payments
+                        produce different ciphertexts via unique nonces.
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-2">
-        <div class="card">
-            <h2>📱 Mesh Devices</h2>
-            <div id="devices"></div>
+    <!-- ================ TAB 2: LIVE DEMO ================ -->
+    <div class="tab-content" id="content-demo">
+
+        <div class="section-header">
+            <div class="section-icon green">🚀</div>
+            <div>
+                <div class="section-title">Interactive Simulator</div>
+                <div class="section-subtitle">Follow the 3-step flow to send an offline payment through the mesh</div>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>🏦 Account Balances</h2>
-            <table id="accounts-table">
-                <thead><tr><th>VPA</th><th>Holder</th><th>Balance</th></tr></thead>
-                <tbody></tbody>
-            </table>
-            <p class="small" id="cacheInfo"></p>
+        <!-- Demo Controls -->
+        <div class="demo-controls">
+            <!-- Step 1 -->
+            <div class="demo-step">
+                <div class="step-badge s1">1</div>
+                <div class="step-info">
+                    <h4>Compose Payment</h4>
+                    <p>Simulates the sender's offline phone encrypting a payment instruction and injecting it into the mesh.</p>
+                    <div class="step-form">
+                        <select class="form-select" id="senderVpa">
+                            <option>alice@demo</option>
+                            <option>bob@demo</option>
+                            <option>carol@demo</option>
+                        </select>
+                        <span class="form-arrow">→</span>
+                        <select class="form-select" id="receiverVpa">
+                            <option>bob@demo</option>
+                            <option>carol@demo</option>
+                            <option>alice@demo</option>
+                            <option>dave@demo</option>
+                        </select>
+                        <input type="number" class="form-input" id="amount" value="500" min="1">
+                        <input type="text" class="form-input" id="pin" value="1234" maxlength="4" placeholder="PIN" style="width:70px">
+                        <button class="btn btn-primary" onclick="sendPacket()" id="btn-send">📤 Inject into Mesh</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Step 2 -->
+            <div class="demo-step">
+                <div class="step-badge s2">2</div>
+                <div class="step-info">
+                    <h4>Run Gossip Protocol</h4>
+                    <p>Simulates epidemic routing — every device broadcasts its packets to nearby phones. TTL decrements per hop.</p>
+                    <button class="btn btn-secondary" onclick="gossip()" id="btn-gossip">🔄 Run Gossip Round</button>
+                </div>
+            </div>
+            <!-- Step 3 -->
+            <div class="demo-step">
+                <div class="step-badge s3">3</div>
+                <div class="step-info">
+                    <h4>Bridge Uploads to Backend</h4>
+                    <p>Bridge nodes with internet connectivity upload all held packets in parallel — triggering idempotency checks.</p>
+                    <button class="btn btn-success" onclick="flushBridges()" id="btn-flush">📡 Bridges Upload</button>
+                </div>
+            </div>
+            <!-- Reset -->
+            <div class="demo-step">
+                <div class="step-badge s4">✕</div>
+                <div class="step-info">
+                    <h4>Reset Everything</h4>
+                    <p>Clears the mesh network and idempotency cache for a fresh demo run.</p>
+                    <button class="btn btn-danger" onclick="resetMesh()" id="btn-reset">🗑 Reset Mesh + Cache</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Dashboard Grid -->
+        <div class="card-grid card-grid-2">
+            <!-- Mesh Devices -->
+            <div class="card">
+                <div class="section-header" style="margin-bottom:16px">
+                    <div class="section-icon purple">📱</div>
+                    <div>
+                        <div class="section-title" style="font-size:16px">Mesh Devices</div>
+                        <div class="section-subtitle">Virtual phones in the simulated network</div>
+                    </div>
+                </div>
+                <div class="mesh-grid" id="devices"></div>
+            </div>
+
+            <!-- Account Balances -->
+            <div class="card">
+                <div class="section-header" style="margin-bottom:16px">
+                    <div class="section-icon green">🏦</div>
+                    <div>
+                        <div class="section-title" style="font-size:16px">Account Balances</div>
+                        <div class="section-subtitle" id="cacheInfo">Idempotency cache: 0</div>
+                    </div>
+                </div>
+                <table class="data-table" id="accounts-table">
+                    <thead><tr><th>VPA</th><th>Holder</th><th>Balance</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Transaction Ledger -->
+        <div class="card" style="margin-top:20px">
+            <div class="section-header" style="margin-bottom:16px">
+                <div class="section-icon orange">📜</div>
+                <div>
+                    <div class="section-title" style="font-size:16px">Transaction Ledger</div>
+                    <div class="section-subtitle">Most recent settlements, including duplicate drops</div>
+                </div>
+            </div>
+            <div style="overflow-x:auto">
+                <table class="data-table" id="tx-table">
+                    <thead><tr>
+                        <th>ID</th><th>From</th><th>To</th><th>Amount</th>
+                        <th>Status</th><th>Bridge</th><th>Hops</th><th>Settled</th>
+                    </tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="card" style="margin-top:20px">
+            <div class="section-header" style="margin-bottom:16px">
+                <div class="section-icon blue">🪵</div>
+                <div>
+                    <div class="section-title" style="font-size:16px">Activity Log</div>
+                    <div class="section-subtitle">Real-time event stream from your demo session</div>
+                </div>
+            </div>
+            <div class="log-container" id="log">Waiting for activity...</div>
         </div>
     </div>
 
-    <div class="card" style="margin-top: 16px">
-        <h2>📜 Transaction Ledger</h2>
-        <table id="tx-table">
-            <thead><tr>
-                <th>ID</th><th>From</th><th>To</th><th>Amount</th>
-                <th>Status</th><th>Bridge</th><th>Hops</th><th>Settled</th>
-            </tr></thead>
-            <tbody></tbody>
-        </table>
+    <!-- ================ TAB 3: ARCHITECTURE ================ -->
+    <div class="tab-content" id="content-arch">
+
+        <div class="section-header">
+            <div class="section-icon purple">🏗️</div>
+            <div>
+                <div class="section-title">System Architecture</div>
+                <div class="section-subtitle">End-to-end data flow from sender phone to settled ledger entry</div>
+            </div>
+        </div>
+
+        <!-- Visual Flow -->
+        <div class="card" style="margin-bottom:24px">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">📊 Packet Journey</h4>
+            <div class="arch-flow">
+                <div class="arch-node highlight">
+                    <span class="arch-node-icon">📱</span>
+                    <h5>Sender Phone</h5>
+                    <p>Offline. Builds PaymentInstruction, encrypts with server RSA key.</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <span class="arch-node-icon">📶</span>
+                    <h5>BLE Gossip</h5>
+                    <p>Store-and-forward hop. TTL decrements. Ciphertext is opaque.</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node">
+                    <span class="arch-node-icon">🌉</span>
+                    <h5>Bridge Node</h5>
+                    <p>Phone walks into 4G range. Uploads all held packets via HTTPS.</p>
+                </div>
+                <div class="arch-arrow">→</div>
+                <div class="arch-node highlight">
+                    <span class="arch-node-icon">🏦</span>
+                    <h5>Settlement Engine</h5>
+                    <p>Spring Boot backend. Hash → Claim → Decrypt → Freshness → Settle.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Pipeline -->
+        <div class="card" style="margin-bottom:24px">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:4px">⚙️ Server-Side Ingestion Pipeline</h4>
+            <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px">
+                Every packet from a bridge node passes through these 5 atomic stages in BridgeIngestionService
+            </p>
+            <div class="pipeline">
+                <div class="pipeline-step">
+                    <div class="p-num">[1]</div>
+                    <h6>Hash Ciphertext</h6>
+                    <p>SHA-256 of raw ciphertext becomes the idempotency key</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="p-num">[2]</div>
+                    <h6>Claim Hash</h6>
+                    <p>Atomic putIfAbsent (CAS). Duplicates dropped instantly</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="p-num">[3]</div>
+                    <h6>Decrypt</h6>
+                    <p>RSA-OAEP unwraps AES key → AES-GCM decrypts + verifies auth tag</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="p-num">[4]</div>
+                    <h6>Freshness Check</h6>
+                    <p>signedAt must be within 24h. Rejects stale or future-dated packets</p>
+                </div>
+                <div class="pipeline-step">
+                    <div class="p-num">[5]</div>
+                    <h6>Settle</h6>
+                    <p>@Transactional: debit sender, credit receiver, write to ledger</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crypto Detail -->
+        <div class="card-grid card-grid-2">
+            <div class="card">
+                <h4 style="font-size:14px;font-weight:700;margin-bottom:12px">🔐 Encryption Scheme</h4>
+                <table class="data-table">
+                    <tr><td style="color:var(--text-muted);width:40%">Asymmetric</td><td>RSA-2048 with OAEP-SHA256 padding</td></tr>
+                    <tr><td style="color:var(--text-muted)">Symmetric</td><td>AES-256-GCM (authenticated encryption)</td></tr>
+                    <tr><td style="color:var(--text-muted)">Key Exchange</td><td>Fresh AES key per packet, wrapped by RSA</td></tr>
+                    <tr><td style="color:var(--text-muted)">Tamper Detection</td><td>GCM auth tag — any bit-flip = exception</td></tr>
+                    <tr><td style="color:var(--text-muted)">Nonce</td><td>UUID per payment (prevents false dedup)</td></tr>
+                </table>
+            </div>
+            <div class="card">
+                <h4 style="font-size:14px;font-weight:700;margin-bottom:12px">🗺️ Production Roadmap</h4>
+                <table class="data-table">
+                    <tr><td style="color:var(--text-muted);width:40%">H2 in-memory</td><td>→ PostgreSQL + replicas</td></tr>
+                    <tr><td style="color:var(--text-muted)">ConcurrentHashMap</td><td>→ Redis SET NX EX 86400</td></tr>
+                    <tr><td style="color:var(--text-muted)">RSA key in RAM</td><td>→ AWS KMS / HSM</td></tr>
+                    <tr><td style="color:var(--text-muted)">MeshSimulator</td><td>→ Real BLE GATT / Wi-Fi Direct</td></tr>
+                    <tr><td style="color:var(--text-muted)">No rate limiting</td><td>→ API Gateway (Kong/Envoy)</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Global Use Cases -->
+        <div class="card" style="margin-top:20px">
+            <h4 style="font-size:14px;font-weight:700;margin-bottom:12px">🌍 Global Use Cases</h4>
+            <div class="how-steps" style="margin-bottom:0">
+                <div class="how-step" style="padding:16px">
+                    <span class="how-step-emoji" style="font-size:24px">🇮🇳</span>
+                    <h4 style="font-size:13px">India — UPI</h4>
+                    <p>Offline P2P in rural areas or crowded stadiums</p>
+                </div>
+                <div class="how-step" style="padding:16px">
+                    <span class="how-step-emoji" style="font-size:24px">🇺🇸</span>
+                    <h4 style="font-size:13px">USA — FedNow</h4>
+                    <p>Disaster recovery when cell towers are down</p>
+                </div>
+                <div class="how-step" style="padding:16px">
+                    <span class="how-step-emoji" style="font-size:24px">🇧🇷</span>
+                    <h4 style="font-size:13px">Brazil — PIX</h4>
+                    <p>Underground transit systems with no signal</p>
+                </div>
+                <div class="how-step" style="padding:16px">
+                    <span class="how-step-emoji" style="font-size:24px">🇪🇺</span>
+                    <h4 style="font-size:13px">Europe — SEPA</h4>
+                    <p>Cross-border mesh routing corridors</p>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="card" style="margin-top: 16px">
-        <h2>🪵 Activity Log</h2>
-        <div id="log"></div>
-    </div>
 </div>
 
-<script>
-function log(msg) {
-    const el = document.getElementById('log');
-    el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n' + el.textContent;
-}
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+    <p>Mesh-Routed Deferred Settlement System — Architectural Demo</p>
+    <p style="margin-top:4px">Hybrid RSA-OAEP + AES-256-GCM · Atomic CAS Idempotency · Gossip Protocol DTN Simulation</p>
+</footer>
 
-async function refresh() {
-    // Mesh state
-    const m = await fetch('/api/mesh/state').then(r => r.json());
-    const devicesDiv = document.getElementById('devices');
-    devicesDiv.innerHTML = m.devices.map(d => `
-        <div class="device ${d.hasInternet ? 'bridge' : 'offline'}">
-            <strong>${d.deviceId}</strong>
-            <span class="badge ${d.hasInternet ? 'badge-online' : 'badge-offline'}">
-                ${d.hasInternet ? '🌐 4G' : '🚫 OFFLINE'}
-            </span>
-            <span class="small">holding ${d.packetCount} packet(s)</span>
-            <div>${d.packetIds.map(id => `<span class="packet-id">${id}</span>`).join('')}</div>
-        </div>
-    `).join('');
-    document.getElementById('cacheInfo').textContent =
-        `Idempotency cache size: ${m.idempotencyCacheSize}`;
-
-    // Accounts
-    const accs = await fetch('/api/accounts').then(r => r.json());
-    document.querySelector('#accounts-table tbody').innerHTML = accs.map(a => `
-        <tr><td>${a.vpa}</td><td>${a.holderName}</td>
-            <td class="balance">₹${parseFloat(a.balance).toFixed(2)}</td></tr>
-    `).join('');
-
-    // Transactions
-    const txs = await fetch('/api/transactions').then(r => r.json());
-    document.querySelector('#tx-table tbody').innerHTML = txs.map(t => `
-        <tr>
-            <td>${t.id}</td><td>${t.senderVpa}</td><td>${t.receiverVpa}</td>
-            <td class="balance">₹${parseFloat(t.amount).toFixed(2)}</td>
-            <td class="status-${t.status}">${t.status}</td>
-            <td>${t.bridgeNodeId}</td><td>${t.hopCount}</td>
-            <td class="small">${new Date(t.settledAt).toLocaleTimeString()}</td>
-        </tr>
-    `).join('');
-}
-
-async function sendPacket() {
-    const body = {
-        senderVpa: document.getElementById('senderVpa').value,
-        receiverVpa: document.getElementById('receiverVpa').value,
-        amount: parseFloat(document.getElementById('amount').value),
-        pin: document.getElementById('pin').value,
-        ttl: 5,
-        startDevice: 'phone-alice'
-    };
-    const r = await fetch('/api/demo/send', {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(body)
-    }).then(r => r.json());
-    log(`📤 Packet ${r.packetId.substring(0,8)} encrypted & injected at ${r.injectedAt} (TTL ${r.ttl})`);
-    log(`   ciphertext (truncated): ${r.ciphertextPreview}`);
-    refresh();
-}
-
-async function gossip() {
-    const r = await fetch('/api/mesh/gossip', {method: 'POST'}).then(r => r.json());
-    log(`🔄 Gossip: ${r.transfers} transfer(s) — ${JSON.stringify(r.deviceCounts)}`);
-    refresh();
-}
-
-async function flushBridges() {
-    const r = await fetch('/api/mesh/flush', {method: 'POST'}).then(r => r.json());
-    log(`📡 ${r.uploadsAttempted} bridge upload(s):`);
-    r.results.forEach(res => {
-        log(`   ${res.bridgeNode} packet ${res.packetId} → ${res.outcome}` +
-            (res.reason ? ` (${res.reason})` : ''));
-    });
-    refresh();
-}
-
-async function resetMesh() {
-    await fetch('/api/mesh/reset', {method: 'POST'});
-    log('🗑 mesh + idempotency cache cleared');
-    refresh();
-}
-
-refresh();
-setInterval(refresh, 3000);
-</script>
+<!-- ===== JAVASCRIPT ===== -->
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

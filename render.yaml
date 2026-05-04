@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: upi-mesh-demo
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/accounts
+    envVars:
+      - key: SERVER_PORT
+        value: 8081
